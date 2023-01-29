@@ -34,9 +34,9 @@ def formatNewCSV(filename:str, totalHops:int):
     csvHeader = "Datetime,"
     for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops    
         if hopNum is not totalHops:
-            csvHeader = csvHeader + f"Hop {hopNum},"
+            csvHeader = csvHeader + f"{hostArray[hopNum-1]['hostname']},"
         else:                                           # Last CSV header cannot have comma at end of string
-            csvHeader = csvHeader + f"Hop {hopNum}\n"
+            csvHeader = csvHeader + f"{hostArray[hopNum-1]['hostname']}\n"
 
     tempCSVOverwrite = open("temp.csv", "w")
     tempCSVOverwrite.write(csvHeader)
@@ -60,7 +60,11 @@ def main():
     formatNewCSV(filename, totalHops)
     
     df = pd.read_csv("temp.csv")
-    print(df)
+
+    fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher")
+    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_xaxes(rangeslider_visible=True)
+    fig.show()
 
 
 
