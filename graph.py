@@ -4,7 +4,7 @@ import pandas as pd
 hostArray = []                                          # Global Host Information variable
 
 def csvHostInformation(filename:str):
-    with open(filename, 'r', encoding='utf-8-sig') as csv:
+    with open(filename, 'r', encoding='utf-8-sig') as csv:  # PingPlotter CSV file
         for line in csv:                                # Grabbing the Host Information section of data
             if "Sample Information" in line:
                 break
@@ -27,9 +27,9 @@ def formatNewCSV(filename:str, totalHops:int):
     Function takes PingPlotter CSV file and properly serializes the data portion
     to have correct headers so pandas can properly import it
     """
-
-    startLine = totalHops + 1                           # Actual CSV data starts a bit after Host Info
-    oldfile = open(filename, 'r', encoding='utf-8-sig')
+    
+    ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
+    startLine = totalHops + 1                           # CSV ping data starts a bit after Host Info, this is the line in the file to start on
     
     csvHeader = "Datetime,"
     for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops    
@@ -42,8 +42,8 @@ def formatNewCSV(filename:str, totalHops:int):
     tempCSVOverwrite.write(csvHeader)
     tempCSVOverwrite.close()
 
-    tempCSV = open("temp.csv", "a")                     # Write the actual CSV data to this temp file
-    for lineNumber, line in enumerate(oldfile):
+    tempCSV = open("temp.csv", "a")                     # Write the latency CSV data to this temp file
+    for lineNumber, line in enumerate(ppCSV):
         if lineNumber > startLine:
             tempCSV.write(line)
     
