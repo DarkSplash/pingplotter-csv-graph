@@ -1,9 +1,11 @@
 import plotly.express as px
 import pandas as pd
 
-hostArray = []                                          # Global Host Information variable
 
-def csvHostInformation(filename:str):
+
+def csvHostInformation(filename:str):   
+    hostArray = []
+
     with open(filename, 'r', encoding='utf-8-sig') as csv:  # PingPlotter CSV file
         for line in csv:                                # Grabbing the Host Information section of data
             if "Sample Information" in line:
@@ -19,10 +21,12 @@ def csvHostInformation(filename:str):
                 hostDict["hostname"] = lineData[1]
                 hostDict["ip"] = lineData[2]
                 hostArray.append(hostDict)
+    
+    return hostArray
                 
 
 
-def formatNewCSV(filename:str, totalHops:int):
+def formatNewCSV(filename:str, totalHops:int, hostArray):
     """
     Function takes PingPlotter CSV file and properly serializes the data portion
     to have correct headers so pandas can properly import it
@@ -61,6 +65,13 @@ def getDataFrame():
 
 
 
+def getHostname(hostArray):
+    hostnameArr = []
+    for dict in hostArray:
+        print(dict["hostname"])
+
+
+
 def graphAll(df):
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
     fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
@@ -88,11 +99,11 @@ def graphAll(df):
 
 def main():
     filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
-    csvHostInformation(filename)
+    hostArray = csvHostInformation(filename)
     
     totalHops = len(hostArray)
     
-    formatNewCSV(filename, totalHops)
+    formatNewCSV(filename, totalHops, hostArray)
     
     df = getDataFrame()
 
