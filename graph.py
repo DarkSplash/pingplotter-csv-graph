@@ -38,29 +38,30 @@ def formatNewCSV(filename:str, totalHops:int):
         else:                                           # Last CSV header cannot have comma at end of string
             csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']}\n"
 
-    tempCSVOverwrite = open("temp.csv", "w")
+    tempCSVOverwrite = open("formattedData.csv", "w")
     tempCSVOverwrite.write(csvHeader)
     tempCSVOverwrite.close()
 
-    tempCSV = open("temp.csv", "a")                     # Write the latency CSV data to this temp file
+    tempCSV = open("formattedData.csv", "a")                     # Write the latency CSV data to this temp file
     for lineNumber, line in enumerate(ppCSV):
         if lineNumber > startLine:
             tempCSV.write(line)
     
     tempCSV.close()
+    ppCSV.close()
 
 
 
-def main():
-    filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
-    csvHostInformation(filename)
-    
-    totalHops = len(hostArray)
-    
-    formatNewCSV(filename, totalHops)
-    
-    df = pd.read_csv("temp.csv")
+def getDataFrame():
+    """
+    Assumes the .csv file is named formattedData.csv thanks to formatNewCSV()
+    """
+    df = pd.read_csv("formattedData.csv")
+    return df
 
+
+
+def graphAll(df):
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
     fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
     fig.update_xaxes(
@@ -82,6 +83,20 @@ def main():
     )
     
     fig.show()
+
+
+
+def main():
+    filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
+    csvHostInformation(filename)
+    
+    totalHops = len(hostArray)
+    
+    formatNewCSV(filename, totalHops)
+    
+    df = getDataFrame()
+
+    graphAll(df)
 
 
 
