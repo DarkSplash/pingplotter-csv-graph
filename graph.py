@@ -34,9 +34,9 @@ def formatNewCSV(filename:str, totalHops:int):
     csvHeader = "Datetime,"
     for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops    
         if hopNum is not totalHops:
-            csvHeader = csvHeader + f"{hostArray[hopNum-1]['hostname']},"
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']},"
         else:                                           # Last CSV header cannot have comma at end of string
-            csvHeader = csvHeader + f"{hostArray[hopNum-1]['hostname']}\n"
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']}\n"
 
     tempCSVOverwrite = open("temp.csv", "w")
     tempCSVOverwrite.write(csvHeader)
@@ -52,18 +52,35 @@ def formatNewCSV(filename:str, totalHops:int):
 
 
 def main():
-    filename = "one.one.one.one ATLASNOVUS.csv"
-
+    filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
     csvHostInformation(filename)
     
     totalHops = len(hostArray)
+    
     formatNewCSV(filename, totalHops)
     
     df = pd.read_csv("temp.csv")
 
-    fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher")
+    fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
     fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
-    fig.update_xaxes(rangeslider_visible=True)
+    fig.update_xaxes(
+        tickformat="%I:%M %p\n%b %d, %Y",
+        rangeslider_visible=True,
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1, label="1min", step="minute", stepmode="backward"),
+                dict(count=5, label="5min", step="minute", stepmode="backward"),
+                dict(count=10, label="10min", step="minute", stepmode="backward"),
+                dict(count=30, label="30min", step="minute", stepmode="backward"),
+                dict(count=1, label="1h", step="hour", stepmode="backward"),
+                dict(count=3, label="3h", step="hour", stepmode="backward"),
+                dict(count=6, label="6h", step="hour", stepmode="backward"),
+                dict(count=12, label="12h", step="hour", stepmode="backward"),
+                dict(step="all")
+            ])
+        )
+    )
+    
     fig.show()
 
 
