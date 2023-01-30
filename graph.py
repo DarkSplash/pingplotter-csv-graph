@@ -3,6 +3,8 @@ import pandas as pd
 
 
 
+filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
+
 def csvHostInformation(filename:str):   
     hostArray = []
 
@@ -68,7 +70,9 @@ def getDataFrame():
 def getHostname(hostArray):
     hostnameArr = []
     for dict in hostArray:
-        print(dict["hostname"])
+        hostnameArr.append(dict["hostname"])
+    
+    return hostnameArr
 
 
 
@@ -98,7 +102,6 @@ def graphAll(df):
 
 
 def main():
-    filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
     hostArray = csvHostInformation(filename)
     
     totalHops = len(hostArray)
