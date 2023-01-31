@@ -1,9 +1,20 @@
 import plotly.express as px
 import pandas as pd
 
-
-
 filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
+# filename = "2023-01-30 cdns01.comcast.net ATLASNOVUS.csv"
+
+def getGlobalFilename() -> str:
+    global filename
+    return filename
+
+
+
+def setGlobalFilename(newFilename:str):
+    global filename
+    filename = newFilename
+
+
 
 def csvHostInformation(filename:str):   
     hostArray = []
@@ -58,11 +69,19 @@ def formatNewCSV(filename:str, totalHops:int, hostArray):
 
 
 
+def csvInit():
+    hostArray = csvHostInformation(filename)
+    totalHops = len(hostArray)
+    formatNewCSV(filename, totalHops, hostArray)
+
+
+
 def getDataFrame():
     """
     Assumes the .csv file is named formattedData.csv thanks to formatNewCSV()
     """
     df = pd.read_csv("formattedData.csv")
+    df = df.astype(object)                              # Need to explicitly cast all columns to one type or else Plotly will complain
     return df
 
 
@@ -102,12 +121,8 @@ def graphAll(df):
 
 
 def main():
-    hostArray = csvHostInformation(filename)
-    
-    totalHops = len(hostArray)
-    
-    formatNewCSV(filename, totalHops, hostArray)
-    
+    csvInit()
+
     df = getDataFrame()
 
     graphAll(df)
