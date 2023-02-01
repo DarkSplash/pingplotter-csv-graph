@@ -9,21 +9,32 @@ root = 0                                                # Initializing global GU
 frame = 0
 
 ###############################################################################
+#                                TKINTER LOGIC                                #
+###############################################################################
+def frameKiller(*args):
+    global frame
+    frame.destroy()
+
+    for argFrame in args:
+        if isinstance(argFrame[0], tk.Frame):           # Checks to make sure that frames were actually passed
+            argFrame[0].destroy()
+
+
+###############################################################################
 #                                 MENU LOGIC                                  #
 ###############################################################################
-def home():
-    global frame
-    frame.destroy()                                     # Kills the current frame and re-runs the logic for the main menu frame
-    mainMenu()
+def returnToHome(*args):                                
+    frameKiller(args)                                   # Kills the current frame and any other frames passed to it and re-runs the logic for the main menu frame
+    homeWindow()
 
 
 
 def addMenu(root):                                      # TODO: Figure out a way to also add the Main Menu just a menu button as well
     menu = tk.Menu(root)
     item = tk.Menu(menu)
-    item.add_command(label='Back to Main Menu', command=lambda: home())
-    item.add_command(label='Exit', command=lambda: root.destroy())
-    menu.add_cascade(label='Menu', menu=item)
+    item.add_command(label="Back to Main Menu", command=lambda: returnToHome())
+    item.add_command(label="Exit", command=lambda: root.destroy())
+    menu.add_cascade(label="Menu", menu=item)
     root.config(menu=menu)
 
 
@@ -33,30 +44,31 @@ def initRoot():
     root = tk.Tk()
     root.title("PingPlotter CSV Grapher")
     root.geometry("350x400")
-    addMenu(root)
+    # addMenu(root)
 
 
 
 ###############################################################################
 #                                WINDOW LOGIC                                 #
 ###############################################################################
-def specificHosts():
+def specificHostsWindow():
     global frame
     frame.destroy()                                     # Killing Old frame
 
     frame = tk.Frame(root)
     frame.pack()
 
-    bottomframe = tk.Frame(root)
-    bottomframe.pack( side = tk.BOTTOM )
-
-    label = tk.Label(frame, text ="Graph Specific Hosts")
-    label.place(anchor = tk.CENTER, relx = .5, y = 7)
-
-    button = ttk.Button(bottomframe, text ='Graph All Hosts',command=lambda: graph.graphAll(graph.getDataFrame())) # Need lambda to call function w/ parameter and not have it execute on runtime
-    button.grid()
+    bottomFrame = tk.Frame(root)
+    bottomFrame.pack(side = tk.BOTTOM)
 
     frame.grid_rowconfigure(0, minsize=25)              # Label buffer
+    bottomFrame.grid_rowconfigure(1, minsize=15)        # Bottom buttons buffer
+
+    label = tk.Label(frame, text ="Graph Specific Hosts")
+    label.place(anchor = tk.CENTER, relx = .5, y = 10)
+
+    backButton = ttk.Button(bottomFrame, text ="Back",command=lambda: returnToHome(bottomFrame)) # Need lambda to call function w/ parameter and not have it execute on runtime
+    backButton.grid(row = 0, sticky="W")
 
     hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))
 
@@ -72,23 +84,23 @@ def specificHosts():
 
 
 
-def mainMenu():
+def homeWindow():
     global frame
     frame = tk.Frame(root)
     frame.pack()
 
     label = ttk.Label(frame, text ="Graph Selector")
-    label.place(anchor = tk.CENTER, relx = .5, y = 7)
+    label.place(anchor = tk.CENTER, relx = .5, y = 10)
 
     frame.grid_rowconfigure(0, minsize=25)
 
-    button = ttk.Button(frame, text ='Graph All Hosts',command=lambda: graph.graphAll(graph.getDataFrame())) # Need lambda to call function w/ parameter and not have it execute on runtime
+    button = ttk.Button(frame, text ="Graph All Hosts",command=lambda: graph.graphAll(graph.getDataFrame())) # Need lambda to call function w/ parameter and not have it execute on runtime
     button.grid(row=1, column=0)
 
-    button2 = ttk.Button(frame, text ='Graph Specific Hosts',command=lambda: specificHosts())
+    button2 = ttk.Button(frame, text ="Graph Specific Hosts",command=lambda: specificHostsWindow())
     button2.grid(row=2, column=0)
 
-    button3 = ttk.Button(frame, text ='Current Filename',command=lambda: print(graph.getGlobalFilename()))
+    button3 = ttk.Button(frame, text ="Current Filename",command=lambda: print(graph.getGlobalFilename()))
     button3.grid(row=3, column=0)
 
     root.mainloop()
@@ -97,7 +109,7 @@ def mainMenu():
 
 def main():
     initRoot()
-    mainMenu()
+    homeWindow()
 
 
 
@@ -108,7 +120,7 @@ def test():
     graph.csvInit()
     
     initRoot()
-    mainMenu()
+    homeWindow()
 
 
 
