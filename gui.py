@@ -24,12 +24,16 @@ def guiSelectFilename():
     """
     Prompts the user to select what .csv file they want to use via a GUI
     """
+    global root                                         # Used to rename the window title
     stringPath = f"{os.getcwd()}"
 
     file = askopenfile(mode ='r', initialdir=stringPath, filetypes =[('Comma Separated Value', '*.csv')])
     if file is not None:
         changeCSVFile(file.name)
     file.close()
+
+    if root != 0:                                       # Making sure this doesn't run when root hasn't been initialized yet
+        setWindowTitle(root, f"PingPlotter CSV Grapher - {graph.getGlobalFilename().split('/')[-1]}") # Set window title to new filename
 
 
 
@@ -39,13 +43,24 @@ def guiSelectFilename():
 def initRoot():
     global root
     root = tk.Tk()
-    root.title(f"PingPlotter CSV Grapher")
-    root.geometry("350x400")
+    setWindowTitle(root, f"PingPlotter CSV Grapher - {graph.getGlobalFilename().split('/')[-1]}")
+    root.geometry("400x400")
     root.focus_force()
 
 
 
+def setWindowTitle(root, title:str):
+    """
+    Quick little function to rename the root window title
+    """    
+    root.title(title)
+
+
+
 def frameKiller(*args):
+    """
+    Takes any number of frame arguments and iterates through them all and destroys them all
+    """
     global frame
     frame.destroy()
 
@@ -104,8 +119,6 @@ def homeWindow():
 
     label = ttk.Label(frame, text="Graph Selector")
     label.place(anchor=tk.CENTER, relx=.5, y=10)
-    label2 = tk.Text(frame, text=f"{graph.getGlobalFilename().split('/')[-1]}", width=40 + len(graph.getGlobalFilename().split('/')[-1]))
-    label2.place(anchor=tk.CENTER, relx=.5, y=20)
 
     frame.grid_rowconfigure(0, minsize=25)
 
@@ -133,9 +146,6 @@ def main():
 
 def test():
     guiSelectFilename()
-    
-    print()
-    print()
 
     initRoot()
     homeWindow()
