@@ -76,6 +76,17 @@ def returnToHome(*args):
 
 
 
+def getHostnameMask(frame):
+    hostnameMask = []
+
+    for widget in frame.winfo_children():               # Starting all of the checkboxes unselected
+        if isinstance(widget, tk.Checkbutton):
+            hostnameMask.append(widget.var.get())
+
+    return hostnameMask
+
+
+
 ###############################################################################
 #                                WINDOW LOGIC                                 #
 ###############################################################################
@@ -97,12 +108,20 @@ def specificHostsWindow():
 
     backButton = ttk.Button(bottomFrame, text="Back",command=lambda: returnToHome(bottomFrame)) # Need lambda to call function w/ parameter and not have it execute on runtime
     backButton.grid(row=0, column=0, sticky="W")
+    
+    graphButton = ttk.Button(bottomFrame, text="Graph Selected",command=lambda: graph.csvInitSpecific(getHostnameMask(frame)))
+    graphButton.grid(row=0, column=1, sticky="E")
 
     hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))
 
     row = 1
     for hostname in hostnameArr:
-        tempCheck = tk.Checkbutton(frame, text=hostname)# Adding a tk checkbox per hostname
+        tempBool = tk.BooleanVar()
+        tempBool.set(False)
+
+        tempCheck = tk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a tk checkbox per hostname
+        tempCheck.var = tempBool
+
         tempCheck.grid(row=row, sticky="W")             # Left justified, and starts at index 1 since 0 is a buffer
         row = row + 1
     
@@ -122,7 +141,7 @@ def homeWindow():
 
     frame.grid_rowconfigure(0, minsize=25)
 
-    button = ttk.Button(frame, text="Graph All Hosts", command=lambda: graph.graphAll(graph.getDataFrame())) # Need lambda to call function w/ parameter and not have it execute on runtime
+    button = ttk.Button(frame, text="Graph All Hosts", command=lambda: graph.graphAll(graph.getDataFrame()))
     button.grid(row=1, column=0)
 
     button2 = ttk.Button(frame, text="Graph Specific Hosts", command=lambda: specificHostsWindow())

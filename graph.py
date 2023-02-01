@@ -5,6 +5,8 @@ import pandas as pd
 filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
 # filename = "2023-01-30 cdns01.comcast.net ATLASNOVUS.csv"
 
+
+
 def getGlobalFilename() -> str:
     global filename
     return filename
@@ -79,10 +81,56 @@ def formatNewCSV(filename:str, totalHops:int, hostArray):
 
 
 
+def formatNewCSVSpecific(filename:str, totalHops:int, hostArray:list, hostnameMask:list):
+    """
+    Function takes the hostname mask from gui.getCheckboxStatus() and deletes
+    the respective columns that are set to false in the mask.
+    """
+    ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
+    startLine = totalHops + 1                           # CSV ping data starts a bit after Host Info, this is the line in the file to start on
+    
+    trueIndexes = [i for i, val in enumerate(hostnameMask) if val]  # Fancy one liner that finds all the indicies that are true in an array
+    lastTrueIndex = trueIndexes[-1] + 1                 # Getting the last index of true so I know not to add a comma to the end of the string
+
+    csvHeader = "Datetime,"
+    for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops    
+        print(f"Hop {hopNum}: {hostnameMask[hopNum-1]}")
+
+        if hopNum is not totalHops and hostnameMask[hopNum-1] and hopNum is not lastTrueIndex:
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']},"
+        elif hostnameMask[hopNum-1] and hopNum is lastTrueIndex:        # Last CSV header cannot have comma at end of string
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']}\n"                                          
+            
+
+    tempCSVOverwrite = open("formattedData.csv", "w")
+    tempCSVOverwrite.write(csvHeader)
+    tempCSVOverwrite.close()
+
+    # tempCSV = open("formattedData.csv", "a")                     # Write the latency CSV data to this temp file
+    # for lineNumber, line in enumerate(ppCSV):
+    #     if lineNumber > startLine:
+    #         tempCSV.write(line)
+    
+    # tempCSV.close()
+    ppCSV.close()
+
+
+
 def csvInit():
     hostArray = csvHostInformation(filename)
     totalHops = len(hostArray)
     formatNewCSV(filename, totalHops, hostArray)
+
+
+
+def csvInitSpecific(hostnameMask:list):
+    """
+    Used in gui.specificHostsWindow() to make a .csv file with only whatever hostnames
+    were selected in the GUI.
+    """
+    hostArray = csvHostInformation(filename)
+    totalHops = len(hostArray)
+    formatNewCSVSpecific(filename, totalHops, hostArray, hostnameMask)
 
 
 
