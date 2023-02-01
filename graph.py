@@ -1,6 +1,7 @@
 import plotly.express as px
 import pandas as pd
 
+# filename = ""
 filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
 # filename = "2023-01-30 cdns01.comcast.net ATLASNOVUS.csv"
 
@@ -16,7 +17,16 @@ def setGlobalFilename(newFilename:str):
 
 
 
-def csvHostInformation(filename:str):   
+def csvHostInformation(filename:str):                   # TODO: Look at the code from netops tracker report for the Path object logic
+    """
+    Function creates a list of dicts with the host information from each hop from PingPlotter.
+    The host list looks something like this:\n\n
+    
+    hostArray = [
+        {'hop':'1', 'hostname':'test.net', 'ip':'1.2.3.4'},
+        {'hop':'2', 'hostname':'one.one.one.one', 'ip':'1.1.1.1'}
+    ]
+    """
     hostArray = []
 
     with open(filename, 'r', encoding='utf-8-sig') as csv:  # PingPlotter CSV file
@@ -42,7 +52,7 @@ def csvHostInformation(filename:str):
 def formatNewCSV(filename:str, totalHops:int, hostArray):
     """
     Function takes PingPlotter CSV file and properly serializes the data portion
-    to have correct headers so pandas can properly import it
+    to have correct headers so pandas can properly import it.
     """
     
     ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
