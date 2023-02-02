@@ -16,7 +16,6 @@ def changeCSVFile(filename:str):
     Used in guiSelectFilename()
     """
     graph.setGlobalFilename(filename)                   # Changing filename in graph script
-    graph.csvInit()                                     # Creating formattedData.csv
 
 
 
@@ -77,6 +76,10 @@ def returnToHome(*args):
 
 
 def getHostnameMask(frame):
+    """
+    Used as parameter for graph.graphSpecific, which in turn uses the hostname mask
+    in graph.csvInitSpecific()
+    """
     hostnameMask = []
 
     for widget in frame.winfo_children():               # Starting all of the checkboxes unselected
@@ -109,7 +112,7 @@ def specificHostsWindow():
     backButton = ttk.Button(bottomFrame, text="Back",command=lambda: returnToHome(bottomFrame)) # Need lambda to call function w/ parameter and not have it execute on runtime
     backButton.grid(row=0, column=0, sticky="W")
     
-    graphButton = ttk.Button(bottomFrame, text="Graph Selected",command=lambda: graph.csvInitSpecific(getHostnameMask(frame)))
+    graphButton = ttk.Button(bottomFrame, text="Graph Selected",command=lambda: graph.graphSpecific(getHostnameMask(frame)))
     graphButton.grid(row=0, column=1, sticky="E")
 
     hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))
@@ -141,7 +144,7 @@ def homeWindow():
 
     frame.grid_rowconfigure(0, minsize=25)
 
-    button = ttk.Button(frame, text="Graph All Hosts", command=lambda: graph.graphAll(graph.getDataFrame()))
+    button = ttk.Button(frame, text="Graph All Hosts", command=lambda: graph.graphAll())
     button.grid(row=1, column=0)
 
     button2 = ttk.Button(frame, text="Graph Specific Hosts", command=lambda: specificHostsWindow())
