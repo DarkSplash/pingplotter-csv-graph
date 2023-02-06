@@ -93,47 +93,6 @@ def getHostnameMask(frame):
 ###############################################################################
 #                                WINDOW LOGIC                                 #
 ###############################################################################
-def specificHostsWindow():
-    global frame
-    frame.destroy()                                     # Killing Old frame
-
-    frame = tk.Frame(root)
-    frame.pack()
-
-    bottomFrame = tk.Frame(root)
-    bottomFrame.pack(side = tk.BOTTOM)
-
-    frame.grid_rowconfigure(0, minsize=25)              # Label buffer
-    bottomFrame.grid_rowconfigure(1, minsize=15)        # Bottom buttons buffer
-
-    label = tk.Label(frame, text="Graph Specific Hosts")
-    label.place(anchor = tk.CENTER, relx = .5, y = 10)
-
-    backButton = ttk.Button(bottomFrame, text="Back",command=lambda: returnToHome(bottomFrame)) # Need lambda to call function w/ parameter and not have it execute on runtime
-    backButton.grid(row=0, column=0, sticky="W")
-    
-    graphButton = ttk.Button(bottomFrame, text="Graph Selected",command=lambda: graph.graphSpecific(getHostnameMask(frame)))
-    graphButton.grid(row=0, column=1, sticky="E")
-
-    hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))
-
-    row = 1
-    for hostname in hostnameArr:
-        tempBool = tk.BooleanVar()
-        tempBool.set(False)
-
-        tempCheck = tk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a tk checkbox per hostname
-        tempCheck.var = tempBool
-
-        tempCheck.grid(row=row, sticky="W")             # Left justified, and starts at index 1 since 0 is a buffer
-        row = row + 1
-    
-    for widget in frame.winfo_children():               # Starting all of the checkboxes unselected
-        if isinstance(widget, tk.Checkbutton):
-            widget.deselect()
-
-
-
 def homeWindow():
     global frame
     frame = tk.Frame(root)
@@ -150,23 +109,128 @@ def homeWindow():
     button2 = ttk.Button(frame, text="Graph Specific Hosts", command=lambda: specificHostsWindow())
     button2.grid(row=2, column=0)
 
-    button3 = ttk.Button(frame, text="Change CSV File", command=lambda: guiSelectFilename())
+    button3 = ttk.Button(frame, text="Graph Single Host", command=lambda: singleHostWindow())
     button3.grid(row=3, column=0)
-
-    button4 = ttk.Button(frame, text="Current Filename", command=lambda: print(graph.getGlobalFilename()))
+    
+    button4 = ttk.Button(frame, text="Change CSV File", command=lambda: guiSelectFilename())
     button4.grid(row=4, column=0)
+
+    button5 = ttk.Button(frame, text="Current Filename", command=lambda: print(graph.getGlobalFilename()))
+    button5.grid(row=5, column=0)
 
     root.mainloop()
 
 
 
+def specificHostsWindow():
+    global frame
+    frame.destroy()                                     # Killing Old frame
+
+    frame = tk.Frame(root)
+    frame.pack()
+
+    bottomFrame = tk.Frame(root)
+    bottomFrame.pack(side = tk.BOTTOM)
+
+    frame.grid_rowconfigure(0, minsize=25)              # Label buffer
+    bottomFrame.grid_rowconfigure(1, minsize=15)        # Bottom buttons buffer
+
+    label = ttk.Label(frame, text="Graph Specific Hosts")
+    label.place(anchor = tk.CENTER, relx = .5, y = 10)
+
+    backButton = ttk.Button(bottomFrame, text="Back",command=lambda: returnToHome(bottomFrame))
+    backButton.grid(row=0, column=0, sticky="W")
+    
+    graphButton = ttk.Button(bottomFrame, text="Graph Selected",command=lambda: graph.graphSpecific(getHostnameMask(frame)))
+    graphButton.grid(row=0, column=1, sticky="E")
+
+    hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))
+
+    row = 1
+    for hostname in hostnameArr:
+        tempBool = tk.BooleanVar()
+        tempBool.set(False)
+
+        tempCheck = tk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a tk checkbox per hostname
+        tempCheck.var = tempBool
+
+        tempCheck.grid(row=row, sticky="W")             # Left justified, and row starts at index 1 since 0 is a buffer
+        row = row + 1
+    
+    for widget in frame.winfo_children():               # Starting all of the checkboxes unselected
+        if isinstance(widget, tk.Checkbutton):
+            widget.deselect()
+
+
+
+def onlyInt(inStr,acttyp):
+    """
+    Function from https://stackoverflow.com/a/35554720 to only allow digits into tkinter entry fields
+    """
+    if acttyp == '1': #insert
+        if not inStr.isdigit():
+            return False
+    return True
+
+
+
+def popupAverage():
+    popup = tk.Toplevel(root)
+    popup.geometry("200x100")
+    popup.grab_set()
+    popup.focus_force()
+
+    label = ttk.Label(popup, text="Number of pings used to calculate\njitter and moving average", justify="center")
+    label.pack()
+
+    entry = ttk.Entry(popup, validate="key")            # Code from https://stackoverflow.com/a/35554720
+    entry['validatecommand'] = (entry.register(onlyInt),'%P','%d')  # Makes it so only digits are accepted into this entry field
+    entry.pack()
+
+    button = ttk.Button(popup, text="Set",command=lambda: print(f"Int: {entry.get()} Type: {type(entry.get())}"))
+    button.pack()
+
+
+
+
+def singleHostWindow():
+    global frame
+    frame.destroy()                                     # Killing Old frame
+
+    popupAverage()
+
+    frame = tk.Frame(root)
+    frame.pack()
+
+    bottomFrame = tk.Frame(root)
+    bottomFrame.pack(side = tk.BOTTOM)
+
+    frame.grid_rowconfigure(0, minsize=25)              # Label buffer
+    bottomFrame.grid_rowconfigure(1, minsize=15)        # Bottom buttons buffer
+
+    label = ttk.Label(frame, text="Graph Single Host")
+    label.place(anchor = tk.CENTER, relx = .5, y = 10)
+
+    backButton = ttk.Button(bottomFrame, text="Back",command=lambda: returnToHome(bottomFrame))
+    backButton.grid(row=0, column=0, sticky="W")
+    
+    graphButton = ttk.Button(bottomFrame, text="Graph Host",command=lambda: graph.graphSingle(hostnameArr[radioSelection.get()]))
+    graphButton.grid(row=0, column=1, sticky="E")
+
+    hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))
+
+    radioSelection = tk.IntVar()                        # Variable that will hold the index of the selected hostname from hostnameArr
+    row = 1
+    for hostname in hostnameArr:
+        tempCheck = ttk.Radiobutton(frame, text=hostname, variable=radioSelection, value=row-1)# Adding a ttk radiobutton per hostname, value coincides with hostnameArr indexes
+
+        tempCheck.grid(row=row, sticky="W")             # Left justified, and row starts at index 1 since 0 is a buffer
+        row = row + 1
+
+
+
+
 def main():
-    initRoot(graph.getGlobalFilename())
-    homeWindow()
-
-
-
-def test():
     guiSelectFilename()
 
     initRoot()
@@ -175,4 +239,4 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    main()

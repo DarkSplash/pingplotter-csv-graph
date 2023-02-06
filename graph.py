@@ -51,9 +51,29 @@ def csvHostInformation(filename:str):
                 
 
 
+def getDataFrame():
+    """
+    Assumes the .csv file is named formattedData.csv thanks to the numerous format functions
+    """
+    df = pd.read_csv("formattedData.csv")
+    df = df.astype(object)                              # Need to explicitly cast all columns to one type or else Plotly will complain
+    return df
+
+
+
+def getHostname(hostArray):
+    hostnameArr = []
+    for dict in hostArray:
+        hostnameArr.append(dict["hostname"])
+    
+    return hostnameArr
+
+###############################################################################
+#                               ALL HOSTS LOGIC                               #
+###############################################################################
 def formatNewCSV(filename:str, totalHops:int, hostArray):
     """
-    Used in csvInit()). Function takes PingPlotter CSV file and properly serializes
+    Used in csvInit(). Function takes PingPlotter CSV file and properly serializes
     the data portion to have correct headers so pandas can properly import it.
     """
     
@@ -81,11 +101,45 @@ def formatNewCSV(filename:str, totalHops:int, hostArray):
 
 
 
+def csvInit():
+    hostArray = csvHostInformation(filename)
+    totalHops = len(hostArray)
+    formatNewCSV(filename, totalHops, hostArray)
+
+
+
+def graphAll():
+    csvInit()
+    df = getDataFrame()
+    
+    fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
+    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_xaxes(
+        tickformat="%I:%M %p\n%b %d, %Y",
+        rangeslider_visible=True,
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1, label="1min", step="minute", stepmode="backward"),
+                dict(count=5, label="5min", step="minute", stepmode="backward"),
+                dict(count=10, label="10min", step="minute", stepmode="backward"),
+                dict(count=30, label="30min", step="minute", stepmode="backward"),
+                dict(count=1, label="1h", step="hour", stepmode="backward"),
+                dict(count=3, label="3h", step="hour", stepmode="backward"),
+                dict(count=6, label="6h", step="hour", stepmode="backward"),
+                dict(count=12, label="12h", step="hour", stepmode="backward"),
+                dict(step="all")
+            ])
+        )
+    )
+    
+    fig.show()
+
+###############################################################################
+#                            SPECIFIC HOSTS LOGIC                             #
+###############################################################################
 def formatNewCSVSpecific(filename:str, totalHops:int, hostArray:list, hostnameMask:list):
     """
-    Used in csvInitSpecific(). Function takes the hostname mask from gui.getCheckboxStatus()
-    and only selects the respective columns that were set to True in the mask while performing
-    similar serialization tasks that formatNewCSV() also does.
+    
     """
     ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
     startLine = totalHops + 1                           # CSV ping data starts a bit after Host Info, this is the line in the file to start on
@@ -131,68 +185,13 @@ def formatNewCSVSpecific(filename:str, totalHops:int, hostArray:list, hostnameMa
 
 
 
-def csvInit():
-    hostArray = csvHostInformation(filename)
-    totalHops = len(hostArray)
-    formatNewCSV(filename, totalHops, hostArray)
-
-
-
 def csvInitSpecific(hostnameMask:list):
     """
-    Used in gui.specificHostsWindow() to make a .csv file with only whatever hostnames
-    were selected in the GUI.
+    
     """
     hostArray = csvHostInformation(filename)
     totalHops = len(hostArray)
     formatNewCSVSpecific(filename, totalHops, hostArray, hostnameMask)
-
-
-
-def getDataFrame():
-    """
-    Assumes the .csv file is named formattedData.csv thanks to formatNewCSV()
-    """
-    df = pd.read_csv("formattedData.csv")
-    df = df.astype(object)                              # Need to explicitly cast all columns to one type or else Plotly will complain
-    return df
-
-
-
-def getHostname(hostArray):
-    hostnameArr = []
-    for dict in hostArray:
-        hostnameArr.append(dict["hostname"])
-    
-    return hostnameArr
-
-
-
-def graphAll():
-    csvInit()
-    df = getDataFrame()
-    
-    fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
-    fig.update_xaxes(
-        tickformat="%I:%M %p\n%b %d, %Y",
-        rangeslider_visible=True,
-        rangeselector=dict(
-            buttons=list([
-                dict(count=1, label="1min", step="minute", stepmode="backward"),
-                dict(count=5, label="5min", step="minute", stepmode="backward"),
-                dict(count=10, label="10min", step="minute", stepmode="backward"),
-                dict(count=30, label="30min", step="minute", stepmode="backward"),
-                dict(count=1, label="1h", step="hour", stepmode="backward"),
-                dict(count=3, label="3h", step="hour", stepmode="backward"),
-                dict(count=6, label="6h", step="hour", stepmode="backward"),
-                dict(count=12, label="12h", step="hour", stepmode="backward"),
-                dict(step="all")
-            ])
-        )
-    )
-    
-    fig.show()
 
 
 
@@ -221,6 +220,82 @@ def graphSpecific(hostnameMask:list):
     )
     
     fig.show()
+
+###############################################################################
+#                              SINGLE HOST LOGIC                              #
+###############################################################################
+def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str):
+    """
+    
+    """
+    recentPings = []                                    # An array to hold the last x number of pings, with x being user defined
+    
+    ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
+    startLine = totalHops + 1                           # CSV ping data starts a bit after Host Info, this is the line in the file to start on
+
+    csvHeader = "Datetime,"
+    selectedHop = 0                                     # Variable for which hop was actually selected, will be used for data selection later in a 1 indexed dataset
+    for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops  
+
+        if hostname == hostArray[hopNum-1]['hostname']:
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']}\n" 
+            selectedHop = hopNum                                     
+
+    tempCSVOverwrite = open("formattedData.csv", "w")
+    tempCSVOverwrite.write(csvHeader)
+    tempCSVOverwrite.close()
+
+    tempCSV = open("formattedData.csv", "a")            # Write the PingPlotter CSV data to the newly formatted CSV
+    for lineNumber, line in enumerate(ppCSV):
+        if lineNumber > startLine:
+            stripedLine = line.strip()                  # Stripping all newline escape characters out of each line in file
+            lineArray = stripedLine.split(",")          # Splitting up CSV line into list so I can mask out the hostnames not to be graphed
+
+            newLine = f"{lineArray[0]},{lineArray[selectedHop]}\n"  # Variable for new line to be appended to formattedData.csv with only single host
+            tempCSV.write(newLine)                      # Write the new line CSV line with only the data from the selected host
+
+    tempCSV.close()
+    ppCSV.close()
+
+
+
+def csvInitSingle(hostname:str):
+    """
+    test 
+    """
+    hostArray = csvHostInformation(filename)
+    totalHops = len(hostArray)
+    formatNewCSVSingle(filename, totalHops, hostArray, hostname)
+
+
+
+def graphSingle(hostname:str):
+    csvInitSingle(hostname)
+    # df = getDataFrame()
+    
+    # fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
+    # fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    # fig.update_xaxes(
+    #     tickformat="%I:%M %p\n%b %d, %Y",
+    #     rangeslider_visible=True,
+    #     rangeselector=dict(
+    #         buttons=list([
+    #             dict(count=1, label="1min", step="minute", stepmode="backward"),
+    #             dict(count=5, label="5min", step="minute", stepmode="backward"),
+    #             dict(count=10, label="10min", step="minute", stepmode="backward"),
+    #             dict(count=30, label="30min", step="minute", stepmode="backward"),
+    #             dict(count=1, label="1h", step="hour", stepmode="backward"),
+    #             dict(count=3, label="3h", step="hour", stepmode="backward"),
+    #             dict(count=6, label="6h", step="hour", stepmode="backward"),
+    #             dict(count=12, label="12h", step="hour", stepmode="backward"),
+    #             dict(step="all")
+    #         ])
+    #     )
+    # )
+    
+    # fig.show()
+
+
 
 
 
