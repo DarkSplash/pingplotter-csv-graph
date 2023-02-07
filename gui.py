@@ -7,8 +7,8 @@ import tkinter.ttk as ttk
 from tkinter.filedialog import askopenfile
 
 root = 0                                                # Initializing global GUI variables to some bogus value
-frame = 0
-
+frame = 0                                               # Ideally it looks like python Classes should be used for GUIs instead of global vars, but since this is my first project, it's staying simple
+avg = 15                                                # Setting avg to default value incase user closes out of popup
 
 
 def changeCSVFile(filename:str):
@@ -16,6 +16,25 @@ def changeCSVFile(filename:str):
     Used in guiSelectFilename()
     """
     graph.setGlobalFilename(filename)                   # Changing filename in graph script
+
+
+
+def setAvg(num, popup):
+    """
+    Used in popupAverage() to set the global avg variable and destroy the popup window
+    """
+    global avg
+    
+    if num != '' and num != '0':
+        avg = int(num)
+    elif num == '0':
+        print("Hop number cannot be zero, setting to default of 15 hops")
+        avg = 15
+    else:
+        print("Blank number selected, setting to default of 15 hops")
+        avg = 15
+    
+    popup.destroy()
 
 
 
@@ -87,6 +106,17 @@ def getHostnameMask(frame):
             hostnameMask.append(widget.var.get())
 
     return hostnameMask
+
+
+
+def onlyInt(inStr, acttyp):
+    """
+    Function from https://stackoverflow.com/a/35554720 to only allow digits into tkinter entry fields
+    """
+    if acttyp == '1': #insert
+        if not inStr.isdigit():
+            return False
+    return True
 
 
 
@@ -163,17 +193,6 @@ def specificHostsWindow():
 
 
 
-def onlyInt(inStr,acttyp):
-    """
-    Function from https://stackoverflow.com/a/35554720 to only allow digits into tkinter entry fields
-    """
-    if acttyp == '1': #insert
-        if not inStr.isdigit():
-            return False
-    return True
-
-
-
 def popupAverage():
     popup = tk.Toplevel(root)
     popup.geometry("200x100")
@@ -187,7 +206,7 @@ def popupAverage():
     entry['validatecommand'] = (entry.register(onlyInt),'%P','%d')  # Makes it so only digits are accepted into this entry field
     entry.pack()
 
-    button = ttk.Button(popup, text="Set",command=lambda: print(f"Int: {entry.get()} Type: {type(entry.get())}"))
+    button = ttk.Button(popup, text="Set",command=lambda: setAvg(entry.get(), popup))
     button.pack()
 
 
@@ -195,6 +214,7 @@ def popupAverage():
 
 def singleHostWindow():
     global frame
+    global avg
     frame.destroy()                                     # Killing Old frame
 
     popupAverage()
@@ -214,7 +234,7 @@ def singleHostWindow():
     backButton = ttk.Button(bottomFrame, text="Back",command=lambda: returnToHome(bottomFrame))
     backButton.grid(row=0, column=0, sticky="W")
     
-    graphButton = ttk.Button(bottomFrame, text="Graph Host",command=lambda: graph.graphSingle(hostnameArr[radioSelection.get()]))
+    graphButton = ttk.Button(bottomFrame, text="Graph Host",command=lambda: graph.graphSingle(hostnameArr[radioSelection.get()], avg))  # Passing needed vars over to graph.py
     graphButton.grid(row=0, column=1, sticky="E")
 
     hostnameArr = graph.getHostname(graph.csvHostInformation(graph.filename))

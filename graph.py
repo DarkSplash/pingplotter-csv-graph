@@ -224,7 +224,7 @@ def graphSpecific(hostnameMask:list):
 ###############################################################################
 #                              SINGLE HOST LOGIC                              #
 ###############################################################################
-def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str):
+def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str, avg:int):
     """
     
     """
@@ -238,7 +238,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
     for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops  
 
         if hostname == hostArray[hopNum-1]['hostname']:
-            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']}\n" 
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']},Moving Average for last {avg} pings\n" 
             selectedHop = hopNum                                     
 
     tempCSVOverwrite = open("formattedData.csv", "w")
@@ -251,7 +251,16 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
             stripedLine = line.strip()                  # Stripping all newline escape characters out of each line in file
             lineArray = stripedLine.split(",")          # Splitting up CSV line into list so I can mask out the hostnames not to be graphed
 
-            newLine = f"{lineArray[0]},{lineArray[selectedHop]}\n"  # Variable for new line to be appended to formattedData.csv with only single host
+            if lineArray[selectedHop] != "N/A" and lineArray[selectedHop] != "*":
+                recentPings.append(float(lineArray[selectedHop]))
+            else:
+                recentPings.append(999)                 # If the host has either dropped the connection completely or isn't responding, default to 999 ping
+            recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
+
+            movingAverage = round(sum(recentPings) / len(recentPings), 2)  # Calculating the average of the recent pings
+            print(movingAverage)
+
+            newLine = f"{lineArray[0]},{lineArray[selectedHop]},{movingAverage}\n"  # Variable for new line to be appended to formattedData.csv with only single host
             tempCSV.write(newLine)                      # Write the new line CSV line with only the data from the selected host
 
     tempCSV.close()
@@ -259,41 +268,54 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
 
 
 
-def csvInitSingle(hostname:str):
+def csvInitSingle(hostname:str, avg:int):
     """
     test 
     """
     hostArray = csvHostInformation(filename)
     totalHops = len(hostArray)
-    formatNewCSVSingle(filename, totalHops, hostArray, hostname)
+    formatNewCSVSingle(filename, totalHops, hostArray, hostname, avg)
 
 
 
-def graphSingle(hostname:str):
-    csvInitSingle(hostname)
-    # df = getDataFrame()
+def graphSingle(hostname:str, avg:int):
+    """
+    Initial function call from gui.py in function chain that looks like so:
+
+    gui.singleHostWindow() -> graphSingle() -> csvInitSingle() -> formatNewCSVSingle()
+
+    Parameters
+    ----------
+    hostname : str
+        The hostname of the hop that is being singled out for graphing.
+    avg : int
+        An integer the user selects that determines how many hops are included in the 
+        moving average calculations.
+    """
+    csvInitSingle(hostname, avg)
+    df = getDataFrame()
     
-    # fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    # fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
-    # fig.update_xaxes(
-    #     tickformat="%I:%M %p\n%b %d, %Y",
-    #     rangeslider_visible=True,
-    #     rangeselector=dict(
-    #         buttons=list([
-    #             dict(count=1, label="1min", step="minute", stepmode="backward"),
-    #             dict(count=5, label="5min", step="minute", stepmode="backward"),
-    #             dict(count=10, label="10min", step="minute", stepmode="backward"),
-    #             dict(count=30, label="30min", step="minute", stepmode="backward"),
-    #             dict(count=1, label="1h", step="hour", stepmode="backward"),
-    #             dict(count=3, label="3h", step="hour", stepmode="backward"),
-    #             dict(count=6, label="6h", step="hour", stepmode="backward"),
-    #             dict(count=12, label="12h", step="hour", stepmode="backward"),
-    #             dict(step="all")
-    #         ])
-    #     )
-    # )
+    fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
+    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_xaxes(
+        tickformat="%I:%M %p\n%b %d, %Y",
+        rangeslider_visible=True,
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1, label="1min", step="minute", stepmode="backward"),
+                dict(count=5, label="5min", step="minute", stepmode="backward"),
+                dict(count=10, label="10min", step="minute", stepmode="backward"),
+                dict(count=30, label="30min", step="minute", stepmode="backward"),
+                dict(count=1, label="1h", step="hour", stepmode="backward"),
+                dict(count=3, label="3h", step="hour", stepmode="backward"),
+                dict(count=6, label="6h", step="hour", stepmode="backward"),
+                dict(count=12, label="12h", step="hour", stepmode="backward"),
+                dict(step="all")
+            ])
+        )
+    )
     
-    # fig.show()
+    fig.show()
 
 
 
