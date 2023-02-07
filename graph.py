@@ -229,6 +229,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
     
     """
     recentPings = []                                    # An array to hold the last x number of pings, with x being user defined
+    jitter = []                                         # An array to hold the difference between the last two pings, mostly from https://www.pingman.com/kb/article/what-is-jitter-57.html
     
     ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
     startLine = totalHops + 1                           # CSV ping data starts a bit after Host Info, this is the line in the file to start on
@@ -238,7 +239,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
     for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops  
 
         if hostname == hostArray[hopNum-1]['hostname']:
-            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']},Moving Average for last {avg} pings\n" 
+            csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']},Moving Average for last {avg} pings, Jitter for last {avg} pings\n" 
             selectedHop = hopNum                                     
 
     tempCSVOverwrite = open("formattedData.csv", "w")
@@ -257,10 +258,17 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
                 recentPings.append(999)                 # If the host has either dropped the connection completely or isn't responding, default to 999 ping
             recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
 
-            movingAverage = round(sum(recentPings) / len(recentPings), 2)  # Calculating the average of the recent pings
-            print(movingAverage)
+            if len(recentPings) > 1:
+                jitter.append(abs(recentPings[-1]-recentPings[-2]))
+            else:
+                jitter.append(recentPings[-1])
+            
+            jitter = jitter[-(avg-1):]                  # Only keeping the last avg - 1 number of values in the array
 
-            newLine = f"{lineArray[0]},{lineArray[selectedHop]},{movingAverage}\n"  # Variable for new line to be appended to formattedData.csv with only single host
+            movingAverage = round(sum(recentPings) / len(recentPings), 2)  # Calculating the rolling average of the recent pings
+            jitterAverage = round(sum(jitter) / len(jitter), 2) # Calculating the jitter of the recent pings
+
+            newLine = f"{lineArray[0]},{lineArray[selectedHop]},{movingAverage},{jitterAverage}\n"  # Variable for new line to be appended to formattedData.csv with only single host
             tempCSV.write(newLine)                      # Write the new line CSV line with only the data from the selected host
 
     tempCSV.close()
@@ -296,7 +304,7 @@ def graphSingle(hostname:str, avg:int):
     df = getDataFrame()
     
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_layout(autotypenumbers='convert types', )  # Converting string numbers to their proper types
     fig.update_xaxes(
         tickformat="%I:%M %p\n%b %d, %Y",
         rangeslider_visible=True,
@@ -313,6 +321,9 @@ def graphSingle(hostname:str, avg:int):
                 dict(step="all")
             ])
         )
+    )
+    fig.update_yaxes(
+        fixedrange=False
     )
     
     fig.show()
