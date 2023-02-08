@@ -131,7 +131,10 @@ def graphAll():
             ])
         )
     )
-    
+    fig.update_yaxes(
+        fixedrange=False
+    )
+
     fig.show()
 
 ###############################################################################
@@ -218,6 +221,9 @@ def graphSpecific(hostnameMask:list):
             ])
         )
     )
+    fig.update_yaxes(
+        fixedrange=False
+    )
     
     fig.show()
 
@@ -255,10 +261,13 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
             if lineArray[selectedHop] != "N/A" and lineArray[selectedHop] != "*":
                 recentPings.append(float(lineArray[selectedHop]))
             else:
-                recentPings.append(999)                 # If the host has either dropped the connection completely or isn't responding, default to 999 ping
+                if lineNumber < startLine + 3:          # If you're within the first three pings and get a N/A or *, assume 0 ping so avg and jitter dont look like trash
+                    recentPings.append(0)
+                else:
+                    recentPings.append(999)             # If the host has either dropped the connection completely or isn't responding, default to 999 ping
             recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
 
-            if len(recentPings) > 1:
+            if len(recentPings) > 1:                    # Checking to see if there even is two elements to average
                 jitter.append(abs(recentPings[-1]-recentPings[-2]))
             else:
                 jitter.append(recentPings[-1])
@@ -292,13 +301,16 @@ def graphSingle(hostname:str, avg:int):
 
     gui.singleHostWindow() -> graphSingle() -> csvInitSingle() -> formatNewCSVSingle()
 
+    Allows the user to select a single host, and then does some calcualtions to determine the
+    moving average and the jitter of the last x pings, with x being user defined.
+
     Parameters
     ----------
     hostname : str
         The hostname of the hop that is being singled out for graphing.
     avg : int
         An integer the user selects that determines how many hops are included in the 
-        moving average calculations.
+        moving average and jitter calculations.
     """
     csvInitSingle(hostname, avg)
     df = getDataFrame()

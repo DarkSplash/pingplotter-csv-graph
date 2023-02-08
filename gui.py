@@ -196,7 +196,6 @@ def specificHostsWindow():
 def popupAverage():
     popup = tk.Toplevel(root)
     popup.geometry("200x100")
-    popup.grab_set()
     popup.focus_force()
 
     label = ttk.Label(popup, text="Number of pings used to calculate\njitter and moving average", justify="center")
