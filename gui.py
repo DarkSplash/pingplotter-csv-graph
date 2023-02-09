@@ -8,20 +8,22 @@ from tkinter.filedialog import askopenfile
 
 root = 0                                                # Initializing global GUI variables to some bogus value
 frame = 0                                               # Ideally it looks like python Classes should be used for GUIs instead of global vars, but since this is my first project, it's staying simple
-avg = 15                                                # Setting avg to default value incase user closes out of popup
+avg = 15                                                # Setting avg to default value in case user closes out of popup before defining avg
 
 
-def changeCSVFile(filename:str):
+def setAvg(num:str, popup:tk.Toplevel):
     """
-    Used in guiSelectFilename()
-    """
-    graph.setGlobalFilename(filename)                   # Changing filename in graph script
+    Function used in popupAverage() to set the global avg variable to a new value
+    and after setting the new value, destroys the popup window.
 
-
-
-def setAvg(num, popup):
-    """
-    Used in popupAverage() to set the global avg variable and destroy the popup window
+    Parameters
+    ----------
+    num : str
+        String recieved from tkinter Entry widget which will be set equal to avg unless
+        num is "0" or "", in which case a default of 15 is set.
+    popup : Toplevel
+        The tkinter popup window that asks you to set avg, will be destroyed at the end
+        of this function.
     """
     global avg
     
@@ -40,14 +42,15 @@ def setAvg(num, popup):
 
 def guiSelectFilename():
     """
-    Prompts the user to select what .csv file they want to use via a GUI
+    Function to prompt the user to select what .csv file they want to use via a GUI.
+    Is literally the first function ran at runtime, since filename is used everywhere else.
     """
     global root                                         # Used to rename the window title
     stringPath = f"{os.getcwd()}"
 
     file = askopenfile(mode ='r', initialdir=stringPath, filetypes =[('Comma Separated Value', '*.csv')])
     if file is not None:
-        changeCSVFile(file.name)
+        graph.setGlobalFilename(file.name)              # Setting the new filename in graph.py's global filename variable
     file.close()
 
     if root != 0:                                       # Making sure this doesn't run when root hasn't been initialized yet
@@ -59,6 +62,9 @@ def guiSelectFilename():
 #                                TKINTER LOGIC                                #
 ###############################################################################
 def initRoot():
+    """
+    Function to initalize the root Tk variable and name the window appropriately.
+    """
     global root
     root = tk.Tk()
     setWindowTitle(root, f"PingPlotter CSV Grapher - {graph.getGlobalFilename().split('/')[-1]}")
@@ -67,17 +73,29 @@ def initRoot():
 
 
 
-def setWindowTitle(root, title:str):
+def setWindowTitle(root:tk.Tk, title:str):
     """
-    Quick little function to rename the root window title
+    Function to rename the root window title. Used in initRoot() and guiSelectFilename().
+
+    Parameters
+    ----------
+    root : Tk
+        The root tkinter window that gets initialized by the Tk() function.
+    title : str
+        The new string you want to have as the window title.
     """    
     root.title(title)
 
 
 
-def frameKiller(*args):
+def frameKiller(*args:tk.Frame):
     """
-    Takes any number of frame arguments and iterates through them all and destroys them all
+    Takes any number of frame arguments and iterates through them all and destroys them all.
+
+    Parameters
+    ----------
+    *args : Frame
+        Any number of tkinter Frames you wish to destroy.
     """
     global frame
     frame.destroy()
@@ -88,20 +106,42 @@ def frameKiller(*args):
 
 
 
-def returnToHome(*args):                                
+def returnToHome(*args:tk.Frame):
+    """
+    Function to destroy all currently used tkinter frames and then return to the home
+    window where you can make more graph selections.
+
+    Parameters
+    ----------
+    *args : Frame
+        Any number of tkinter Frames you wish to destroy.
+    """
     frameKiller(args)                                   # Kills the current frame and any other frames passed to it and re-runs the logic for the main menu frame
     homeWindow()
 
 
 
-def getHostnameMask(frame):
+def getHostnameMask(frame:tk.Frame) -> list:
     """
-    Used as parameter for graph.graphSpecific, which in turn uses the hostname mask
-    in graph.csvInitSpecific()
+    Function to figure out what tk.Checkbuttons have been selected in a given
+    tkinter frame. Returns a list of 0's and 1's in a 1:1 relationship with the
+    hostnames for each hop. 0 means don't include the host in the graph, while 1
+    means do include this host in the graph.
+
+    Parameters
+    ----------
+    frame : Frame
+        The tkinter frame from specificHostsWindow() that holds all the Checkbutton widgets.
+    
+    Returns
+    -------
+    hostnameMask : list
+        A list containing 0's and 1's, with the indexes representing each hop from 
+        PingPlotter (0 indexed). 1 means include in graph, 0 means do not graph.
     """
     hostnameMask = []
 
-    for widget in frame.winfo_children():               # Starting all of the checkboxes unselected
+    for widget in frame.winfo_children():
         if isinstance(widget, tk.Checkbutton):
             hostnameMask.append(widget.var.get())
 
@@ -111,7 +151,8 @@ def getHostnameMask(frame):
 
 def onlyInt(inStr, acttyp):
     """
-    Function from https://stackoverflow.com/a/35554720 to only allow digits into tkinter entry fields
+    Function from https://stackoverflow.com/a/35554720 to only allow digits 
+    into tkinter entry fields. Used in popupAverage().
     """
     if acttyp == '1': #insert
         if not inStr.isdigit():
@@ -124,6 +165,9 @@ def onlyInt(inStr, acttyp):
 #                                WINDOW LOGIC                                 #
 ###############################################################################
 def homeWindow():
+    """
+    Function that contains all the tkinter GUI logic for the main menu/home window.
+    """
     global frame
     frame = tk.Frame(root)
     frame.pack()
@@ -153,6 +197,9 @@ def homeWindow():
 
 
 def specificHostsWindow():
+    """
+    Function that contains all the tkinter GUI logic for graphing specific hosts.
+    """
     global frame
     frame.destroy()                                     # Killing Old frame
 
@@ -181,7 +228,7 @@ def specificHostsWindow():
         tempBool = tk.BooleanVar()
         tempBool.set(False)
 
-        tempCheck = tk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a tk checkbox per hostname
+        tempCheck = tk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a tk checkbox per hostname (could not find a way to deselect the ttk checkboxes)
         tempCheck.var = tempBool
 
         tempCheck.grid(row=row, sticky="W")             # Left justified, and row starts at index 1 since 0 is a buffer
@@ -194,6 +241,11 @@ def specificHostsWindow():
 
 
 def popupAverage():
+    """
+    Function used in singleHostWindow() to open a popup window and allow the user to set
+    the global avg value.
+    """
+
     popup = tk.Toplevel(root)
     popup.geometry("200x100")
     popup.focus_force()
@@ -212,6 +264,9 @@ def popupAverage():
 
 
 def singleHostWindow():
+    """
+    Function that contains all the tkinter GUI logic for graphing a single host.
+    """
     global frame
     global avg
     frame.destroy()                                     # Killing Old frame
@@ -248,12 +303,10 @@ def singleHostWindow():
 
 
 
-
 def main():
-    guiSelectFilename()
-
-    initRoot()
-    homeWindow()
+    guiSelectFilename()                                 # Selecting the PingPlotter .csv export
+    initRoot()                                          # Initializing the tkinter root window
+    homeWindow()                                        # Loading the main menu frame
 
 
 
