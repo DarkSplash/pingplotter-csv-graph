@@ -1,33 +1,52 @@
 import plotly.express as px
 import pandas as pd
 
-# filename = ""
-filename = "2023-01-29 one.one.one.one ATLASNOVUS trim.csv"
-# filename = "2023-01-30 cdns01.comcast.net ATLASNOVUS.csv"
+filename = ""                                           # Global variable that holds path to the PingPlotter .csv export you want to graph
 
 
 
 def getGlobalFilename() -> str:
+    """
+    Getter function for global filename variable that is used a few time in gui.py.
+
+    Returns
+    -------
+    filename : str
+        String containing a path to the selected PingPlotter .csv file.
+    """
     global filename
     return filename
 
 
 
 def setGlobalFilename(newFilename:str):
+    """
+    Setter function for global filename variable that is used in gui.guiSelectFilename().
+
+    Parameters
+    ----------
+    newFilename : str
+        String containing a path to the newly selected PingPlotter .csv file.
+    """
     global filename
     filename = newFilename
 
 
 
-def csvHostInformation(filename:str):
+def csvHostInformation(filename:str) -> list:
     """
-    Function creates a list of dicts with the host information from each hop from PingPlotter.
+    Function to create a list of dicts with the host information from each hop from PingPlotter.
     The host list looks something like this:\n\n
     
     hostArray = [
         {'hop':'1', 'hostname':'test.net', 'ip':'1.2.3.4'},
         {'hop':'2', 'hostname':'one.one.one.one', 'ip':'1.1.1.1'}
     ]
+
+    Returns
+    -------
+    hostArray : list
+        An array that contains all of the host information in the capture.
     """
     hostArray = []
 
@@ -51,9 +70,15 @@ def csvHostInformation(filename:str):
                 
 
 
-def getDataFrame():
+def getDataFrame() -> pd.DataFrame:
     """
-    Assumes the .csv file is named formattedData.csv thanks to the numerous format functions
+    Function to create a pandas dataframe from a pre-formatted .csv file called
+    formattedData.csv that gets created from the numerous formatNewCSV... functions.
+    
+    Returns
+    -------
+    df : DataFrame
+        A pandas Dataframe for the plotly graphing library to create a time series line graph with.
     """
     df = pd.read_csv("formattedData.csv")
     df = df.astype(object)                              # Need to explicitly cast all columns to one type or else Plotly will complain
@@ -61,7 +86,16 @@ def getDataFrame():
 
 
 
-def getHostname(hostArray):
+def getHostname(hostArray:list) -> list:
+    """
+    Function that is used in gui.specificHostsWindow() and gui.singleHostWindow()
+    to list out all hostnames that need checkboxes/radiobuttons.
+
+    Returns
+    -------
+    hostnameArr : list
+        A list of all hostnames from the currently selected PingPlotter CSV file.
+    """
     hostnameArr = []
     for dict in hostArray:
         hostnameArr.append(dict["hostname"])
@@ -71,10 +105,28 @@ def getHostname(hostArray):
 ###############################################################################
 #                               ALL HOSTS LOGIC                               #
 ###############################################################################
-def formatNewCSV(filename:str, totalHops:int, hostArray):
+def formatNewCSV(filename:str, totalHops:int, hostArray:list):
     """
-    Used in csvInit(). Function takes PingPlotter CSV file and properly serializes
-    the data portion to have correct headers so pandas can properly import it.
+    Final function call in graph.py in function chain that looks like so:
+
+    gui.homeWindow() -> graphAll() -> csvInit() -> formatNewCSV()
+
+    This is the function that creates the CSV file that contains the data that gets plotted
+    in graphSpecific(). This function figures out how many hostnames you have selected in your
+    hostnameMask, and then iterates through each CSV line and only selects the data from the 
+    hosts you selected with some simple index math.
+
+    Parameters
+    ----------
+    filename : str
+        The filename of the PingPlotter .csv file.
+    totalHops : int
+        Integer that holds the total number of hops to your target. Used to let the user know
+        what hop they selected when graphing, and is also used to select the first row of actual
+        ping data in the PingPlotter .csv file, since their export starts with host information.
+    hostArray : list
+        An array that contains all of the host information in the capture, Used here to grab hop
+        hostnames. Look at csvHostInformation() for more information.
     """
     
     ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
@@ -102,6 +154,14 @@ def formatNewCSV(filename:str, totalHops:int, hostArray):
 
 
 def csvInit():
+    """
+    Second function call in graph.py in function chain that looks like so:
+
+    gui.homeWindow() -> graphAll() -> csvInit() -> formatNewCSV()
+
+    This is an intermediary function that sets up some variables that are needed
+    in formatNewCSV().
+    """
     hostArray = csvHostInformation(filename)
     totalHops = len(hostArray)
     formatNewCSV(filename, totalHops, hostArray)
@@ -109,6 +169,15 @@ def csvInit():
 
 
 def graphAll():
+    """
+    Initial function call from gui.py in function chain that looks like so:
+
+    gui.homeWindow() -> graphAll() -> csvInit() -> formatNewCSV()
+
+    This is the function with the Plotly graphing logic in it, mostly identical to the
+    other graph functions. The actual graphing logic happens after the new formattedData.csv
+    file is created from formatNewCSV().
+    """
     csvInit()
     df = getDataFrame()
     
@@ -142,7 +211,28 @@ def graphAll():
 ###############################################################################
 def formatNewCSVSpecific(filename:str, totalHops:int, hostArray:list, hostnameMask:list):
     """
-    
+    Final function call in graph.py in function chain that looks like so:
+
+    gui.specificHostsWindow() -> graphSpecific() -> csvInitSpecific() -> formatNewCSVSpecific()
+
+    This is the function that creates the CSV file that contains the data that gets plotted
+    in graphSpecific(). This function figures out how many hostnames you have selected in your
+    hostnameMask, and then iterates through each CSV line and only selects the data from the 
+    hosts you selected with some simple index math.
+
+    Parameters
+    ----------
+    filename : str
+        The filename of the PingPlotter .csv file.
+    totalHops : int
+        Integer that holds the total number of hops to your target. Used to let the user know
+        what hop they selected when graphing, and is also used to select the first row of actual
+        ping data in the PingPlotter .csv file, since their export starts with host information.
+    hostArray : list
+        An array that contains all of the host information in the capture, Used here to grab hop
+        hostnames. Look at csvHostInformation() for more information.
+    hostnameMask : list
+        A list of hostnames that the user has selected to be graphed.
     """
     ppCSV = open(filename, 'r', encoding='utf-8-sig')   # PingPlotter CSV file
     startLine = totalHops + 1                           # CSV ping data starts a bit after Host Info, this is the line in the file to start on
@@ -190,7 +280,17 @@ def formatNewCSVSpecific(filename:str, totalHops:int, hostArray:list, hostnameMa
 
 def csvInitSpecific(hostnameMask:list):
     """
-    
+    Second function call in graph.py in function chain that looks like so:
+
+    gui.specificHostsWindow() -> graphSpecific() -> csvInitSpecific() -> formatNewCSVSpecific()
+
+    This is an intermediary function that sets up some variables that are needed
+    in formatNewCSVSpecific().
+
+    Parameters
+    ----------
+    hostnameMask : list
+        A list of hostnames that the user has selected to be graphed.
     """
     hostArray = csvHostInformation(filename)
     totalHops = len(hostArray)
@@ -199,6 +299,20 @@ def csvInitSpecific(hostnameMask:list):
 
 
 def graphSpecific(hostnameMask:list):
+    """
+    Initial function call from gui.py in function chain that looks like so:
+
+    gui.specificHostsWindow() -> graphSpecific() -> csvInitSpecific() -> formatNewCSVSpecific()
+
+    This is the function with the Plotly graphing logic in it, mostly identical to the
+    other graph functions. The actual graphing logic happens after the new formattedData.csv
+    file is created from formatNewCSVSpecific().
+
+    Parameters
+    ----------
+    hostnameMask : list
+        A list of hostnames that the user has selected to be graphed.
+    """
     csvInitSpecific(hostnameMask)
     df = getDataFrame()
     
@@ -232,7 +346,32 @@ def graphSpecific(hostnameMask:list):
 ###############################################################################
 def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str, avg:int):
     """
-    
+    Final function call in graph.py in function chain that looks like so:
+
+    gui.singleHostWindow() -> graphSingle() -> csvInitSingle() -> formatNewCSVSingle()
+
+    This is the function that creates the CSV file that contains the data that gets plotted
+    in graphSingle(). For the single host csv, there are calculations to find the moving
+    average and jitter over the last avg pings. Any pings that are "N/A" or "*" are set to
+    999 ping unless they are within the first three pings of a capture, in which case they
+    are set to 0.
+
+    Parameters
+    ----------
+    filename : str
+        The filename of the PingPlotter .csv file.
+    totalHops : int
+        Integer that holds the total number of hops to your target. Used to let the user know
+        what hop they selected when graphing, and is also used to select the first row of actual
+        ping data in the PingPlotter .csv file, since their export starts with host information.
+    hostArray : list
+        An array that contains all of the host information in the capture, Used here to grab hop
+        hostnames. Look at csvHostInformation() for more information.
+    hostname : str
+        The hostname of the hop that is being singled out for graphing.
+    avg : int
+        An integer the user selects that determines how many hops are included in the 
+        moving average and jitter calculations.
     """
     recentPings = []                                    # An array to hold the last x number of pings, with x being user defined
     jitter = []                                         # An array to hold the difference between the last two pings, mostly from https://www.pingman.com/kb/article/what-is-jitter-57.html
@@ -243,7 +382,6 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
     csvHeader = "Datetime,"
     selectedHop = 0                                     # Variable for which hop was actually selected, will be used for data selection later in a 1 indexed dataset
     for hopNum in range(1, totalHops+1):                # Running through 1 - totalHops  
-
         if hostname == hostArray[hopNum-1]['hostname']:
             csvHeader = csvHeader + f"{hopNum} - {hostArray[hopNum-1]['hostname']},Moving Average for last {avg} pings, Jitter for last {avg} pings\n" 
             selectedHop = hopNum                                     
@@ -267,7 +405,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
                     recentPings.append(999)             # If the host has either dropped the connection completely or isn't responding, default to 999 ping
             recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
 
-            if len(recentPings) > 1:                    # Checking to see if there even is two elements to average
+            if len(recentPings) > 1:                    # Checking to see if there even is two elements to find the difference between
                 jitter.append(abs(recentPings[-1]-recentPings[-2]))
             else:
                 jitter.append(recentPings[-1])
@@ -287,7 +425,20 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
 
 def csvInitSingle(hostname:str, avg:int):
     """
-    test 
+    Second function call in graph.py in function chain that looks like so:
+
+    gui.singleHostWindow() -> graphSingle() -> csvInitSingle() -> formatNewCSVSingle()
+
+    This is an intermediary function that sets up some variables that are needed
+    in formatNewCSVSingle().
+
+    Parameters
+    ----------
+    hostname : str
+        The hostname of the hop that is being singled out for graphing.
+    avg : int
+        An integer the user selects that determines how many hops are included in the 
+        moving average and jitter calculations.
     """
     hostArray = csvHostInformation(filename)
     totalHops = len(hostArray)
@@ -301,8 +452,9 @@ def graphSingle(hostname:str, avg:int):
 
     gui.singleHostWindow() -> graphSingle() -> csvInitSingle() -> formatNewCSVSingle()
 
-    Allows the user to select a single host, and then does some calcualtions to determine the
-    moving average and the jitter of the last x pings, with x being user defined.
+    This is the function with the Plotly graphing logic in it, mostly identical to the
+    other graph functions. The actual graphing logic happens after the new formattedData.csv
+    file is created from formatNewCSVSingle().
 
     Parameters
     ----------
@@ -339,15 +491,3 @@ def graphSingle(hostname:str, avg:int):
     )
     
     fig.show()
-
-
-
-
-
-def main():
-    graphAll()
-
-
-
-if __name__ == "__main__":
-    main()
