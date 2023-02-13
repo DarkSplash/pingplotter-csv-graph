@@ -353,8 +353,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
     This is the function that creates the CSV file that contains the data that gets plotted
     in graphSingle(). For the single host csv, there are calculations to find the moving
     average and jitter over the last avg pings. Any pings that are "N/A" or "*" are set to
-    999 ping unless they are within the first three pings of a capture, in which case they
-    are set to 0.
+    0 ping.
 
     Parameters
     ----------
@@ -399,10 +398,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
             if lineArray[selectedHop] != "N/A" and lineArray[selectedHop] != "*":
                 recentPings.append(float(lineArray[selectedHop]))
             else:
-                if lineNumber < startLine + 3:          # If you're within the first three pings and get a N/A or *, assume 0 ping so avg and jitter dont look like trash
-                    recentPings.append(0)
-                else:
-                    recentPings.append(999)             # If the host has either dropped the connection completely or isn't responding, default to 999 ping
+                recentPings.append(0)                   # If you're within the first three pings and get a N/A or *, assume 0 ping
             recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
 
             if len(recentPings) > 1:                    # Checking to see if there even is two elements to find the difference between
