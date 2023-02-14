@@ -123,7 +123,7 @@ def returnToHome(*args:tk.Frame):
 
 def getHostnameMask(frame:tk.Frame) -> list:
     """
-    Function to figure out what tk.Checkbuttons have been selected in a given
+    Function to figure out what ttk.Checkbuttons have been selected in a given
     tkinter frame. Returns a list of 0's and 1's in a 1:1 relationship with the
     hostnames for each hop. 0 means don't include the host in the graph, while 1
     means do include this host in the graph.
@@ -143,7 +143,10 @@ def getHostnameMask(frame:tk.Frame) -> list:
 
     for widget in frame.winfo_children():
         if isinstance(widget, ttk.Checkbutton):
-            hostnameMask.append(widget.var.get())
+            if widget.instate(['selected']):            # For some reason Linux does not like widget.var.get() (was always False), so checking widget state instead
+                hostnameMask.append(True)
+            else:
+                hostnameMask.append(False)
     print(hostnameMask)
     return hostnameMask
 
@@ -225,11 +228,7 @@ def specificHostsWindow():
 
     row = 1
     for hostname in hostnameArr:
-        tempBool = tk.BooleanVar()
-        tempBool.set(False)
-
-        tempCheck = ttk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a ttk checkbox per hostname
-        tempCheck.var = tempBool
+        tempCheck = ttk.Checkbutton(frame, text=hostname)  # Adding a ttk checkbox per hostname
 
         tempCheck.grid(row=row, sticky="W")             # Left justified, and row starts at index 1 since 0 is a buffer
         row = row + 1
