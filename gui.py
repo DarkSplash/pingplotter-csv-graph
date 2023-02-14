@@ -124,9 +124,9 @@ def returnToHome(*args:tk.Frame):
 def getHostnameMask(frame:tk.Frame) -> list:
     """
     Function to figure out what ttk.Checkbuttons have been selected in a given
-    tkinter frame. Returns a list of 0's and 1's in a 1:1 relationship with the
-    hostnames for each hop. 0 means don't include the host in the graph, while 1
-    means do include this host in the graph.
+    tkinter frame. Returns a list of booleans in a 1:1 relationship with the
+    hostnames for each hop. True means do include this host in the graph, while 
+    False means don't include the host in the graph.
 
     Parameters
     ----------
@@ -136,8 +136,8 @@ def getHostnameMask(frame:tk.Frame) -> list:
     Returns
     -------
     hostnameMask : list
-        A list containing 0's and 1's, with the indexes representing each hop from 
-        PingPlotter (0 indexed). 1 means include in graph, 0 means do not graph.
+        A list containing booleans, with the indexes representing each hop from 
+        PingPlotter (0 indexed). True means include in graph, False means do not graph.
     """
     hostnameMask = []
 
@@ -147,7 +147,7 @@ def getHostnameMask(frame:tk.Frame) -> list:
                 hostnameMask.append(True)
             else:
                 hostnameMask.append(False)
-    print(hostnameMask)
+
     return hostnameMask
 
 
