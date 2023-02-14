@@ -7,7 +7,7 @@ import tkinter.ttk as ttk
 from tkinter.filedialog import askopenfile
 
 root = 0                                                # Initializing global GUI variables to some bogus value
-frame = 0                                               # Ideally it looks like python Classes should be used for GUIs instead of global vars, but since this is my first project, it's staying simple
+frame = 0                                               # Ideally it looks like python Classes should be used for GUIs instead of global vars, but since this is my first GUI project, it's staying simple
 avg = 15                                                # Setting avg to default value in case user closes out of popup before defining avg
 
 
@@ -53,7 +53,7 @@ def guiSelectFilename():
         graph.setGlobalFilename(file.name)              # Setting the new filename in graph.py's global filename variable
     file.close()
 
-    if root != 0:                                       # Making sure this doesn't run when root hasn't been initialized yet
+    if root != 0:                                       # Making sure this doesn't run if root hasn't been initialized yet
         setWindowTitle(root, f"PingPlotter CSV Grapher - {graph.getGlobalFilename().split('/')[-1]}") # Set window title to new filename
 
 
@@ -142,9 +142,9 @@ def getHostnameMask(frame:tk.Frame) -> list:
     hostnameMask = []
 
     for widget in frame.winfo_children():
-        if isinstance(widget, tk.Checkbutton):
+        if isinstance(widget, ttk.Checkbutton):
             hostnameMask.append(widget.var.get())
-
+    print(hostnameMask)
     return hostnameMask
 
 
@@ -228,15 +228,16 @@ def specificHostsWindow():
         tempBool = tk.BooleanVar()
         tempBool.set(False)
 
-        tempCheck = tk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a tk checkbox per hostname (could not find a way to deselect the ttk checkboxes)
+        tempCheck = ttk.Checkbutton(frame, text=hostname, variable=tempBool)# Adding a ttk checkbox per hostname
         tempCheck.var = tempBool
 
         tempCheck.grid(row=row, sticky="W")             # Left justified, and row starts at index 1 since 0 is a buffer
         row = row + 1
     
     for widget in frame.winfo_children():               # Starting all of the checkboxes unselected
-        if isinstance(widget, tk.Checkbutton):
-            widget.deselect()
+        if isinstance(widget, ttk.Checkbutton):
+            widget.invoke()
+            widget.invoke()                             # Double select to turn on, then off
 
 
 
