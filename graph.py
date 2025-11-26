@@ -1,5 +1,6 @@
 import plotly.express as px
 import pandas as pd
+import re
 
 filename = ""                                           # Global variable that holds path to the PingPlotter .csv export you want to graph
 
@@ -70,7 +71,6 @@ def csvHostInformation(filename:str) -> list:
                     hostDict["ip"] = f"Unknown[{hostDict['hop']}]"
                 hostArray.append(hostDict)
     
-    print(hostArray)
     return hostArray
                 
 
@@ -151,7 +151,8 @@ def formatNewCSV(filename:str, totalHops:int, hostArray:list):
     tempCSV = open("formattedData.csv", "a")            # Write the PingPlotter CSV data to the newly formatted CSV
     for lineNumber, line in enumerate(ppCSV):
         if lineNumber > startLine:
-            tempCSV.write(line)
+            regex = re.sub(r'\bN/A\b|\*', '0', line)    # Checking for any instances of "N/A" or "*" and replacing them with 0
+            tempCSV.write(regex)
     
     tempCSV.close()
     ppCSV.close()
@@ -185,10 +186,9 @@ def graphAll():
     """
     csvInit()
     df = getDataFrame()
-    print(df.columns)
     
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_layout(autotypenumbers='convert types', yaxis_title="Ping (ms)") # Converting string numbers to their proper types & setting Y axis title
     fig.update_xaxes(
         tickformat="%I:%M %p\n%b %d, %Y",
         rangeslider_visible=True,
@@ -261,18 +261,21 @@ def formatNewCSVSpecific(filename:str, totalHops:int, hostArray:list, hostnameMa
 
     tempCSV = open("formattedData.csv", "a")            # Write the PingPlotter CSV data to the newly formatted CSV
     for lineNumber, line in enumerate(ppCSV):
-        if lineNumber > startLine:                      # Iterating through all of the actual data in the PingPlotter CSV file
+        if lineNumber > startLine:                      # Iterating through all of the actual data (starting after Sample Information) in the PingPlotter CSV file
             stripedLine = line.strip()                  # Stripping all newline escape characters out of each line in file
             lineArray = stripedLine.split(",")          # Splitting up CSV line into list so I can mask out the hostnames not to be graphed
 
-            newLine = f"{lineArray[0]},"                # Variable for new line to be appended to formattedData.csv with only selected hostnames
+            newLine = f"{lineArray[0]},"                # Starting the variable for new line to be appended to formattedData.csv with the datetime from the current row of data
 
             for x in range(trueIndexLength):            # Looping for each of the hosts that have been selected
                 csvDataIndex = trueIndexes[x] + 1       # Adding 1 to the index location of the csv data since the first CSV value is Datetime variable
                 
-                newLine = newLine + lineArray[csvDataIndex] # Adding the data to the current line to be added to the new file
+                if lineArray[csvDataIndex] != "N/A" and lineArray[csvDataIndex] != "*":
+                    newLine = newLine + lineArray[csvDataIndex] # Adding the data to the current line to be added to the new file
+                else:
+                    newLine = newLine + "0"             # If the current ping data is either N/A or *, replace it with the numeric value 0.  If this isn't done, Plotly will not be able to graph due to mixed string and numeric variable types
 
-                if x != trueIndexLength-1:              # If you are not on the last piece of data for this row
+                if x != trueIndexLength - 1:            # If you are not on the last piece of data for this row
                     newLine = newLine + ","             # Add a comma
                 else:
                     newLine = newLine + "\n"            # Otherwise newline
@@ -323,7 +326,7 @@ def graphSpecific(hostnameMask:list):
     df = getDataFrame()
     
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_layout(autotypenumbers='convert types', yaxis_title="Ping (ms)") # Converting string numbers to their proper types & setting Y axis title
     fig.update_xaxes(
         tickformat="%I:%M %p\n%b %d, %Y",
         rangeslider_visible=True,
@@ -404,7 +407,7 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
             if lineArray[selectedHop] != "N/A" and lineArray[selectedHop] != "*":
                 recentPings.append(float(lineArray[selectedHop]))
             else:
-                lineArray[selectedHop] = 0              # Setting the actual ping entry to a numeric value (0).  If this isn't done, Plotly will not be able to graph due to mixed string and numeric variable types
+                lineArray[selectedHop] = 0              # If the current ping data is either N/A or *, replace it with the numeric value 0.  If this isn't done, Plotly will not be able to graph due to mixed string and numeric variable types
                 recentPings.append(0)
             recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
 
@@ -471,7 +474,7 @@ def graphSingle(hostname:str, avg:int):
     df = getDataFrame()
     
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
+    fig.update_layout(autotypenumbers='convert types', yaxis_title="Ping (ms)") # Converting string numbers to their proper types & setting Y axis title
     fig.update_xaxes(
         tickformat="%I:%M %p\n%b %d, %Y",
         rangeslider_visible=True,
