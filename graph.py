@@ -64,8 +64,13 @@ def csvHostInformation(filename:str) -> list:
                 hostDict["hop"] = lineData[0]
                 hostDict["hostname"] = lineData[1]
                 hostDict["ip"] = lineData[2]
+                if hostDict["hostname"] == "":
+                    hostDict["hostname"] = f"Unknown[{hostDict['hop']}]"
+                if hostDict["ip"] == "-":
+                    hostDict["ip"] = f"Unknown[{hostDict['hop']}]"
                 hostArray.append(hostDict)
     
+    print(hostArray)
     return hostArray
                 
 
@@ -180,6 +185,7 @@ def graphAll():
     """
     csvInit()
     df = getDataFrame()
+    print(df.columns)
     
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
     fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
@@ -398,7 +404,8 @@ def formatNewCSVSingle(filename:str, totalHops:int, hostArray:list, hostname:str
             if lineArray[selectedHop] != "N/A" and lineArray[selectedHop] != "*":
                 recentPings.append(float(lineArray[selectedHop]))
             else:
-                recentPings.append(0)                   # If you're within the first three pings and get a N/A or *, assume 0 ping
+                lineArray[selectedHop] = 0              # Setting the actual ping entry to a numeric value (0).  If this isn't done, Plotly will not be able to graph due to mixed string and numeric variable types
+                recentPings.append(0)
             recentPings = recentPings[-avg:]            # Only keeping the last avg number of values in the array
 
             if len(recentPings) > 1:                    # Checking to see if there even is two elements to find the difference between
@@ -464,7 +471,7 @@ def graphSingle(hostname:str, avg:int):
     df = getDataFrame()
     
     fig = px.line(df, x='Datetime', y=df.columns, title="PingPlotter CSV Grapher", line_shape="hv")
-    fig.update_layout(autotypenumbers='convert types', )  # Converting string numbers to their proper types
+    fig.update_layout(autotypenumbers='convert types')  # Converting string numbers to their proper types
     fig.update_xaxes(
         tickformat="%I:%M %p\n%b %d, %Y",
         rangeslider_visible=True,
