@@ -1,2 +1,3 @@
 *.csv
+!www.google.com example.csv
 __pycache__/
